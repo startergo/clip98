@@ -56,6 +56,7 @@ port.on("error", (err) => {
 });
 
 port.on("close", () => {
+  if (!running) return; // Expected close from shutdown()
   console.error("Serial port closed unexpectedly.");
   process.exit(1);
 });
@@ -101,11 +102,15 @@ function pollClipboard() {
 pollClipboard();
 
 // --- Graceful shutdown ---
+let shuttingDown = false;
 function shutdown() {
+  if (shuttingDown) return;
+  shuttingDown = true;
   running = false;
   console.log("\nShutting down...");
-  port.close();
-  process.exit(0);
+  port.close(() => process.exit(0));
+  // Fallback: force exit after 2s if close callback never fires
+  setTimeout(() => process.exit(0), 2000).unref();
 }
 
 process.on("SIGINT", shutdown);
