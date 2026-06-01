@@ -13,33 +13,33 @@ import (
 )
 
 func autoDetectPty() string {
-	// Find QEMU PID
-	pid := findQemuPID()
-	if pid != "" {
-		// Find /dev/ptmx fd and extract minor device number from lsof
+	// Try each QEMU PID until we find one with a serial PTY
+	pids := findQemuPIDs()
+	for _, pid := range pids {
 		output, err := exec.Command("lsof", "-p", pid).Output()
-		if err == nil {
-			for _, line := range strings.Split(string(output), "\n") {
-				cols := strings.Fields(line)
-				if len(cols) < 9 {
-					continue
-				}
-				name := cols[len(cols)-1]
-				if name != "/dev/ptmx" {
-					continue
-				}
-				// DEVICE column: "15,17" → minor=17 → /dev/ttys017
-				device := cols[5]
-				parts := strings.SplitN(device, ",", 2)
-				if len(parts) != 2 {
-					continue
-				}
-				minor := parts[1]
-				slave := fmt.Sprintf("/dev/ttys%s", pad3(minor))
-				if _, err := os.Stat(slave); err == nil {
-					fmt.Printf("Auto-detected QEMU serial port: %s\n", slave)
-					return slave
-				}
+		if err != nil {
+			continue
+		}
+		for _, line := range strings.Split(string(output), "\n") {
+			cols := strings.Fields(line)
+			if len(cols) < 9 {
+				continue
+			}
+			name := cols[len(cols)-1]
+			if name != "/dev/ptmx" {
+				continue
+			}
+			// DEVICE column: "15,17" → minor=17 → /dev/ttys017
+			device := cols[5]
+			parts := strings.SplitN(device, ",", 2)
+			if len(parts) != 2 {
+				continue
+			}
+			minor := parts[1]
+			slave := fmt.Sprintf("/dev/ttys%s", pad3(minor))
+			if _, err := os.Stat(slave); err == nil {
+				fmt.Printf("Auto-detected QEMU serial port: %s\n", slave)
+				return slave
 			}
 		}
 	}
@@ -82,21 +82,16 @@ func autoDetectPty() string {
 	return ""
 }
 
-func findQemuPID() string {
-	if output, err := exec.Command("pgrep", "-f", "qemu-system").Output(); err == nil {
-		pid := strings.TrimSpace(string(output))
-		if pid != "" {
-			return strings.SplitN(pid, "\n", 2)[0]
+func findQemuPIDs() []string {
+	for _, args := range [][]string{{"pgrep", "-f", "qemu-system"}, {"pgrep", "qemu"}} {
+		if output, err := exec.Command(args[0], args[1:]...).Output(); err == nil {
+			pids := strings.Fields(strings.TrimSpace(string(output)))
+			if len(pids) > 0 {
+				return pids
+			}
 		}
 	}
-	// Fallback: pgrep qemu
-	if output, err := exec.Command("pgrep", "qemu").Output(); err == nil {
-		pid := strings.TrimSpace(string(output))
-		if pid != "" {
-			return strings.SplitN(pid, "\n", 2)[0]
-		}
-	}
-	return ""
+	return nil
 }
 
 func pad3(s string) string {
@@ -104,4 +99,9 @@ func pad3(s string) string {
 		s = "0" + s
 	}
 	return s
+}
+
+// normalizePortPath is a no-op on macOS.
+func normalizePortPath(p string) string {
+	return p
 }

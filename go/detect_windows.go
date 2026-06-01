@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 func autoDetectPty() string {
@@ -20,4 +21,12 @@ func autoDetectPty() string {
 		}
 	}
 	return ""
+}
+
+// normalizePortPath converts COMx to \\.\COMx for os.OpenFile.
+func normalizePortPath(p string) string {
+	if len(p) >= 4 && strings.EqualFold(p[:3], "COM") {
+		return `\\.\` + p
+	}
+	return p
 }

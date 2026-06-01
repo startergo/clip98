@@ -68,9 +68,9 @@ func main() {
 
 			last.mu.Lock()
 			if text != "" && text != last.text {
-				n, err := f.Write([]byte(text))
-				if err != nil || n != len(text) {
-					fmt.Fprintf(os.Stderr, "Serial write failed: %v (wrote %d/%d bytes)\n", err, n, len(text))
+				// Write all bytes, handling partial writes
+				if err := writeAll(f, []byte(text)); err != nil {
+					fmt.Fprintf(os.Stderr, "Serial write failed: %v\n", err)
 					last.mu.Unlock()
 					shutdown()
 					return
@@ -110,6 +110,8 @@ func main() {
 			}
 			consecutiveErrors = 0
 			if n == 0 {
+				// VMIN=0 returns (0, nil) when idle — don't busy-spin
+				time.Sleep(10 * time.Millisecond)
 				continue
 			}
 
@@ -119,7 +121,7 @@ func main() {
 				if idx == -1 {
 					break
 				}
-				part := strings.TrimRight(pending[:idx], "\r\n")
+				part := pending[:idx]
 				pending = pending[idx+1:]
 				if part == "" {
 					continue
@@ -149,13 +151,25 @@ func main() {
 	shutdown()
 }
 
+// writeAll writes all bytes, handling partial writes.
+func writeAll(f *os.File, data []byte) error {
+	for len(data) > 0 {
+		n, err := f.Write(data)
+		if err != nil {
+			return err
+		}
+		data = data[n:]
+	}
+	return nil
+}
+
 // detectPort returns the serial port path from env, CLI arg, or auto-detection.
 func detectPort() string {
 	if p := os.Getenv("SERIAL_PORT"); p != "" {
-		return p
+		return normalizePortPath(p)
 	}
 	if len(os.Args) > 1 {
-		return os.Args[1]
+		return normalizePortPath(os.Args[1])
 	}
 	return autoDetectPty()
 }

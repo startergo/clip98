@@ -66,6 +66,11 @@ Both implementations **auto-detect** the QEMU serial port. If auto-detection pic
 ./clip98-darwin-arm64 /dev/ttys019
 SERIAL_PORT=/dev/ttys019 ./clip98-darwin-arm64
 
+# Node.js
+npm start -- /dev/ttys019
+SERIAL_PORT=/dev/ttys019 npm start
+```
+
 ### 3. QEMU Setup
 
 Add `-serial pty` to your QEMU command line. QEMU will assign a PTY at startup — the host script will detect it automatically.

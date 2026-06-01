@@ -94,3 +94,8 @@ func findQemuPID() string {
 func isDigit(b byte) bool {
 	return b >= '0' && b <= '9'
 }
+
+// normalizePortPath is a no-op on Linux.
+func normalizePortPath(p string) string {
+	return p
+}
