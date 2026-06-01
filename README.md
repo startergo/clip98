@@ -4,7 +4,7 @@
 
 **Learn more about this in my latest blog post: https://giuliozausa.dev/posts/bm-1-clipboard/**
 
-Bidirectional clipboard sync between any Windows machine (from 95 to 10) and any other machine via serial port. Two host-side implementations are provided: a standalone **Go binary** (recommended) and a **Node.js** script.
+Bidirectional clipboard sync between any Windows machine (from 95 to 10) and any other machine via serial port. Two host-side implementations are provided: a standalone **Go binary** and a **Node.js** script.
 
 ## How It Works
 
