@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/signal"
@@ -115,6 +116,12 @@ func main() {
 
 			n, err := f.Read(buf)
 			if err != nil {
+				// VMIN=0 + VTIME=1: read(2) returns 0 when idle, which Go
+				// surfaces as io.EOF. Treat it as "no data", not a real error.
+				if err == io.EOF {
+					time.Sleep(10 * time.Millisecond)
+					continue
+				}
 				consecutiveErrors++
 				if consecutiveErrors >= 10 {
 					fmt.Fprintf(os.Stderr, "Serial port read failed repeatedly: %v\n", err)

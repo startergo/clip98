@@ -55,8 +55,7 @@ go build -o clip98 .
 ```bash
 cd js
 npm install
-npm start -- /dev/ttys019
-SERIAL_PORT=/dev/ttys019 npm start
+npm start
 ```
 
 Both implementations **auto-detect** the QEMU serial port. If auto-detection picks the wrong device, override it:
