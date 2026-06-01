@@ -57,7 +57,7 @@ void SendClipboard(HWND hwnd) {
 	justReadt = false;
 }
 
-void RecieveData(HWND hwnd) {
+void ReceiveData(HWND hwnd) {
 	char readData;
 	std::vector<char> chars;
 	unsigned long nBytesRead = 0;
@@ -147,7 +147,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		} else {
-			RecieveData(hwnd);
+			ReceiveData(hwnd);
 		}
 	}
 

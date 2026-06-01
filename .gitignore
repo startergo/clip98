@@ -1,4 +1,21 @@
-node_modules
-yarn_error.log
+# Dependencies
+node_modules/
+js/node_modules/
+
+# Build artifacts
+*.exe
+*.obj
+*.o
+Debug/
+Release/
+
+# Lock files (keep one — npm)
+js/yarn.lock
+
+# OS files
 .DS_Store
-Debug
+Thumbs.db
+
+# Logs
+yarn-error.log
+npm-debug.log
