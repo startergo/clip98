@@ -44,7 +44,8 @@ func autoDetectPty() string {
 		}
 	}
 
-	// Fallback: newest /dev/ttys* device
+	// Fallback: newest /dev/ttys* device (excluding own terminal)
+	own := ownTTY()
 	devDir, err := os.ReadDir("/dev")
 	if err != nil {
 		return ""
@@ -61,12 +62,16 @@ func autoDetectPty() string {
 		if !re.MatchString(entry.Name()) {
 			continue
 		}
+		fullPath := filepath.Join("/dev", entry.Name())
+		if fullPath == own {
+			continue
+		}
 		info, err := entry.Info()
 		if err != nil {
 			continue
 		}
 		candidates = append(candidates, candidate{
-			path:  filepath.Join("/dev", entry.Name()),
+			path:  fullPath,
 			mtime: info.ModTime().UnixNano(),
 		})
 	}
@@ -104,4 +109,13 @@ func pad3(s string) string {
 // normalizePortPath is a no-op on macOS.
 func normalizePortPath(p string) string {
 	return p
+}
+
+// ownTTY returns the path of this process's controlling terminal, or "".
+func ownTTY() string {
+	p, err := os.Readlink("/dev/fd/0")
+	if err == nil && strings.HasPrefix(p, "/dev/") {
+		return p
+	}
+	return ""
 }

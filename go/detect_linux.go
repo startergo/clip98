@@ -99,3 +99,12 @@ func isDigit(b byte) bool {
 func normalizePortPath(p string) string {
 	return p
 }
+
+// ownTTY returns the path of this process's controlling terminal, or "".
+func ownTTY() string {
+	p, err := os.Readlink("/proc/self/fd/0")
+	if err == nil && strings.HasPrefix(p, "/dev/") {
+		return p
+	}
+	return ""
+}

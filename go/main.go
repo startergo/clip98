@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -13,6 +14,12 @@ import (
 	"github.com/atotto/clipboard"
 )
 
+var verbose bool
+
+func init() {
+	flag.BoolVar(&verbose, "v", false, "log clipboard payload to stdout")
+}
+
 const (
 	pollInterval = 1 * time.Second
 	delimiter    = 0x0C // form feed (\f)
@@ -24,11 +31,18 @@ type clipState struct {
 }
 
 func main() {
+	flag.Parse()
 	portPath := detectPort()
 	if portPath == "" {
 		fmt.Fprintf(os.Stderr, "No serial port found.\n")
 		fmt.Fprintf(os.Stderr, "Usage: clip98 <serial_port>\n")
 		fmt.Fprintf(os.Stderr, "  Override with SERIAL_PORT env var or CLI argument.\n")
+		os.Exit(1)
+	}
+
+	if own := ownTTY(); own != "" && portPath == own {
+		fmt.Fprintf(os.Stderr, "Refusing to connect to own terminal (%s).\n", portPath)
+		fmt.Fprintf(os.Stderr, "Pass the QEMU serial port explicitly:\n  clip98 /dev/ttys0XX\n")
 		os.Exit(1)
 	}
 
@@ -77,7 +91,9 @@ func main() {
 				}
 				// Only update state after successful write
 				last.text = text
-				fmt.Printf("[send] %s\n", truncate(text, 60))
+				if verbose {
+					fmt.Printf("[send] %s\n", truncate(text, 60))
+				}
 			}
 			last.mu.Unlock()
 
@@ -134,7 +150,9 @@ func main() {
 				last.mu.Lock()
 				last.text = part
 				last.mu.Unlock()
-				fmt.Printf("[recv] %s\n", truncate(part, 60))
+				if verbose {
+					fmt.Printf("[recv] %s\n", truncate(part, 60))
+				}
 			}
 		}
 	}()
@@ -168,8 +186,8 @@ func detectPort() string {
 	if p := os.Getenv("SERIAL_PORT"); p != "" {
 		return normalizePortPath(p)
 	}
-	if len(os.Args) > 1 {
-		return normalizePortPath(os.Args[1])
+	if flag.NArg() > 0 {
+		return normalizePortPath(flag.Arg(0))
 	}
 	return autoDetectPty()
 }

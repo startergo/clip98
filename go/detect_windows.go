@@ -30,3 +30,8 @@ func normalizePortPath(p string) string {
 	}
 	return p
 }
+
+// ownTTY returns "" on Windows (no TTY exclusion needed).
+func ownTTY() string {
+	return ""
+}
