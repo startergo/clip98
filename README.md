@@ -31,7 +31,7 @@ Or download the latest CI-built binary from [Releases](https://github.com/giulio
 
 ### 2. Run the host side
 
-**Option A: Go binary (recommended)**
+**Option A: Go binary**
 
 Single static binary — **no runtime, no dependencies, no installation**. Download from [Releases](https://github.com/giulioz/clip98/releases):
 
