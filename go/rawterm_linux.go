@@ -19,9 +19,9 @@ func setRawMode(f *os.File) error {
 	}
 
 	// Disable echo, canonical mode, and signal characters
-	termios.Lflag &^= unix.ECHO | unix.ECHONL | unix.ICANON | unix.ISIG
-	// Disable input processing
-	termios.Iflag &^= unix.ICRNL | unix.INLCR | unix.IGNCR
+	termios.Lflag &^= unix.ECHO | unix.ECHONL | unix.ICANON | unix.ISIG | unix.IEXTEN
+	// Disable input processing (including software flow control)
+	termios.Iflag &^= unix.ICRNL | unix.INLCR | unix.IGNCR | unix.IXON | unix.IXOFF | unix.ISTRIP
 	// Disable output processing
 	termios.Oflag &^= unix.OPOST
 

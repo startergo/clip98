@@ -82,8 +82,8 @@ func main() {
 
 			last.mu.Lock()
 			if text != "" && text != last.text {
-				// Write all bytes, handling partial writes
-				if err := writeAll(f, []byte(text)); err != nil {
+				// Write all bytes as Latin-1 (matching Win98 ANSI protocol)
+				if err := writeAll(f, toLatin1(text)); err != nil {
 					fmt.Fprintf(os.Stderr, "Serial write failed: %v\n", err)
 					last.mu.Unlock()
 					shutdown()
@@ -131,7 +131,7 @@ func main() {
 				continue
 			}
 
-			pending += string(buf[:n])
+			pending += fromLatin1(buf[:n])
 			for {
 				idx := strings.IndexRune(pending, rune(delimiter))
 				if idx == -1 {
@@ -190,6 +190,31 @@ func detectPort() string {
 		return normalizePortPath(flag.Arg(0))
 	}
 	return autoDetectPty()
+}
+
+// toLatin1 encodes a Go string (UTF-8) to Latin-1 bytes.
+// Runes outside the Latin-1 range (0x00–0xFF) are replaced with '?'.
+// This matches the Win98 ANSI byte protocol.
+func toLatin1(s string) []byte {
+	buf := make([]byte, 0, len(s))
+	for _, r := range s {
+		if r <= 0xFF {
+			buf = append(buf, byte(r))
+		} else {
+			buf = append(buf, '?')
+		}
+	}
+	return buf
+}
+
+// fromLatin1 decodes Latin-1 bytes to a Go string (UTF-8).
+// Each byte maps directly to the same Unicode codepoint.
+func fromLatin1(b []byte) string {
+	buf := make([]rune, len(b))
+	for i, v := range b {
+		buf[i] = rune(v)
+	}
+	return string(buf)
 }
 
 func truncate(s string, maxLen int) string {
