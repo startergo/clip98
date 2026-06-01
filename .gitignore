@@ -8,6 +8,7 @@ js/node_modules/
 *.o
 Debug/
 Release/
+go/clip98
 
 # Lock files (keep one — npm)
 js/yarn.lock
