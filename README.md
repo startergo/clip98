@@ -8,7 +8,10 @@ Bidirectional clipboard sync between any Windows machine (from 95 to 10) and any
 
 ## How It Works
 
-The two sides communicate over a **serial port** (9600 baud, 8N1, no parity). Clipboard contents are sent as raw bytes terminated by a **form feed** (`\f`) delimiter. Each side monitors its local clipboard for changes and pushes updates to the other.
+The two sides communicate over a **serial port** (9600 baud, 8N1, no parity). Each side monitors its local clipboard for changes and pushes updates to the other:
+
+- **Windows → Node**: clipboard text terminated with a **form feed** (`\f`) delimiter. The Node.js side uses a delimiter parser to split messages.
+- **Node → Windows**: raw clipboard text with no delimiter. The Windows side reads until a serial read timeout, then sets the clipboard.
 
 ## Quick Start
 
